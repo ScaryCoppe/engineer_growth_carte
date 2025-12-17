@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>エンジニア成長カルテ（v10: スマホ最適化版）</title>
+  <meta name="description" content="自分と周りが働きやすい環境をつくるために、認識をすり合わせるためのカルテです。">
+
+  <!--
+    Security posture (single-file / offline-first)
+    - 外部CDN/外部フォント: 依存なし（オフラインで動作）
+    - DOM組み立て: innerHTML を原則使わず、createElement + textContent に統一
+    - CSP: ネットワーク接続を禁止（connect-src 'self'）し、外部読み込みを抑止
+      ※単一ファイルのため style/script は 'unsafe-inline' を許可（必要最小限）
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';
+                 img-src 'self' data:; font-src 'self' data:;
+                 style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';
+                 connect-src 'self'; media-src 'none'; object-src 'none'">
+
+  <style>
+    :root{
+      --bg:#f0f9ff;          /* sky-50 */
+      --card:#ffffff;
+      --text:#0f172a;        /* slate-900 */
+      --muted:#64748b;       /* slate-500 */
+      --border:#cbd5e1;      /* slate-300 */
+      --shadow: 0 1px 3px rgba(15,23,42,.08);
+      --shadow-lg: 0 10px 25px rgba(15,23,42,.1);
+
+      /* Main Brand Colors: Blue & Teal/Emerald */
+      --primary:#0284c7;     /* sky-600 */
+      --primary-dark:#0369a1;/* sky-700 */
+      --primary-light:#e0f2fe; /* sky-100 */
+
+      --accent:#0d9488;      /* teal-600 */
+      --accent-light:#ccfbf1; /* teal-100 */
+
+      --rose:#e11d48;        /* Error only */
+      --amber:#d97706;       /* Warning */
+      
+      --orange-light: #fff7ed;
+      --orange-border: #fdba74;
+      --orange-text: #c2410c;
+    }
+
+    /* Base */
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, Arial, sans-serif;
+      line-height:1.6;
+      padding-bottom: 80px;
+    }
+    a{ color:inherit; }
+    .sr-only{
+      position:absolute !important;
+      width:1px;height:1px;
+      padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);
+      white-space:nowrap;border:0;
+    }
+    .container{
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+    .container-narrow{
+      max-width: 768px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* Header */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      box-shadow: var(--shadow);
+      width: 100%;
+    }
+    .header-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:12px 24px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-img {
+      height: 40px;
+      width: auto;
+      display: block;
+    }
+    .title-area {
+      cursor: pointer;
+      user-select: none;
+    }
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      color: #1e3a8a;
+    }
+    .title:hover {
+      opacity: 0.8;
+    }
+    .subtitle{
+      margin:2px 0 0;
+      font-size: 12px;
+      color: #475569;
+      font-weight: 700;
+    }
+    .version{
+      font-size:12px;
+      color:#94a3b8;
+      font-family: monospace;
+      white-space:nowrap;
+    }
+
+    /* Mobile Header Adjustment */
+    @media (max-width: 640px) {
+      .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .logo-img {
+        height: 32px;
+      }
+      .title {
+        font-size: 18px;
+      }
+      .header-row {
+        padding: 10px 16px;
+      }
+    }
+
+    /* Layout sections */
+    main{ padding: 28px 0 48px; }
+    .stack-xxl{ display:flex; flex-direction:column; gap:48px; }
+
+    /* Cards */
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card.pad{ padding: 20px; }
+    .card.pad-lg{ padding: 24px; }
+    .card-title{
+      font-size: 18px;
+      font-weight: 800;
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color: var(--text);
+    }
+    .card-sub{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .divider{ height:1px; background: #e2e8f0; margin: 16px 0; }
+
+    /* Intro & Guidelines */
+    .intro-block {
+      background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+      border-color: #bae6fd;
+    }
+    .intro-block h2 {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0369a1;
+    }
+    .intro-block p {
+      margin: 0 0 16px;
+      color: #334155;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+    .positive-msg {
+      background: rgba(255,255,255,0.6);
+      border-left: 4px solid var(--accent);
+      padding: 12px 16px;
+      margin: 12px 0;
+      border-radius: 4px;
+      color: #0f766e;
+      font-weight: 700;
+    }
+    .safety-note {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    /* Fieldsets */
+    fieldset{ border:0; margin:0; padding:0; }
+    legend{
+      font-weight: 900;
+      color:#334155;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .req{ color: var(--primary); font-size: 12px; font-weight: 800; margin-left: 4px; }
+    .grid{ display:grid; gap: 12px; }
+    .grid.two{ grid-template-columns: 1fr; }
+    .grid.three{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    @media (min-width: 768px){
+      .grid.two{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid.three{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+    .option{ display:block; cursor:pointer; }
+    .option-card{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+      transition: all .2s ease;
+      height: 100%;
+      position: relative;
+    }
+    .option-card:hover{
+      transform: translateY(-2px);
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+    }
+    input.opt:focus-visible + .option-card{ outline: 2px solid var(--primary); outline-offset: 2px; }
+    input.opt:checked + .option-card{
+      border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 2px var(--primary);
+    }
+    input.opt[type="checkbox"]:checked + .option-card{
+      border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent);
+    }
+    .opt-title{ font-weight: 800; font-size: 14px; color: #1e293b; }
+    .opt-desc{ margin-top: 4px; color: #475569; font-size: 12px; font-weight: 600; line-height: 1.4; }
+
+    /* Conditional Sub-Question Animation */
+    .sub-q-area {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--orange-light);
+      border-radius: 12px;
+      margin-top: 0;
+    }
+    .sub-q-area.open {
+      max-height: 800px; /* 複数選択で伸びるので少し余裕を */
+      opacity: 1;
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--orange-border);
+    }
+
+    /* Buttons */
+    .actions{ text-align:center; padding: 10px 0; }
+    .btn{
+      border:0;
+      border-radius: 999px;
+      padding: 16px 32px;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      transition: all .2s ease;
+      letter-spacing: .02em;
+    }
+    .btn[disabled]{ background:#cbd5e1; color:#64748b; cursor:not-allowed; }
+    .btn.primary{ background: var(--primary); color:#fff; }
+    .btn.primary:hover{
+      background: var(--primary-dark);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+      transform: translateY(-1px);
+    }
+    .error{ margin-top: 10px; color: var(--rose); font-weight: 800; font-size: 13px; }
+    .hidden{ display:none !important; }
+
+    /* Result UI */
+    .pill{
+      display:inline-block; padding: 4px 12px; border-radius: 999px;
+      background: var(--primary-light); color: var(--primary-dark);
+      font-weight: 800; font-size: 12px; margin-bottom: 12px;
+    }
+    .result-head{ text-align:center; border-bottom: 1px solid var(--border); padding-bottom: 22px; }
+    .result-head h2{ margin: 0 0 6px; font-size: 26px; font-weight: 900; color:#0f172a; }
+    .result-head p{ margin:0; color: var(--muted); font-weight: 600; }
+
+    .block{ border-radius: 18px; overflow:hidden; border:1px solid var(--border); box-shadow: var(--shadow); background:#fff; }
+    .block-head{ padding: 18px 24px; border-bottom: 1px solid #e2e8f0; }
+    .kicker{ font-size: 12px; font-weight: 800; color:#64748b; text-transform: uppercase; letter-spacing: .05em; }
+    .block-title{ margin: 6px 0 0; font-size: 20px; font-weight: 900; display:flex; align-items:center; gap:10px; color:#0f172a; }
+    .block-sub{ margin: 4px 0 0; color: var(--muted); font-size: 14px; font-weight: 600; }
+    .block-body{ padding: 20px 24px 24px; }
+    
+    .item{ border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+    .item h4{ margin:0 0 10px; font-size: 16px; font-weight: 800; color:#334155; }
+    
+    .row{ display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 768px){ .row{ grid-template-columns: 1fr 1fr; } }
+    
+    .panel{
+      background: #fff; border-radius: 10px; padding: 12px 14px;
+      border-left: 4px solid #cbd5e1; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;
+    }
+    .panel.good{ border-left-color: var(--primary); }
+    .panel .label{ display:block; font-size: 11px; font-weight: 800; color:#64748b; margin-bottom: 4px; }
+    .panel .text{ font-size: 13.5px; font-weight: 600; color:#334155; line-height: 1.5; }
+
+    .summary{ background:#1e293b; color:#f1f5f9; border-radius: 18px; padding: 24px; box-shadow: var(--shadow-lg); }
+    .summary h3{ margin:0 0 16px; font-size: 20px; font-weight: 900; color:#fff; display:flex; align-items:center; gap:10px; }
+    .summary-grid{ display:grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 768px){ .summary-grid{ grid-template-columns: 1fr 1fr; gap: 24px; } }
+    .summary small{ display:block; color:#94a3b8; font-weight: 700; font-size: 11px; margin-bottom: 4px; }
+    .summary .big{ font-size: 18px; font-weight: 800; color:#fff; }
+    .summary .amber{ color:#fbbf24; }
+    .summary .teal{ color:#2dd4bf; }
+
+    details{ margin-top: 24px; border-radius: 12px; background: rgba(255,255,255,0.1); padding: 16px; border: 1px solid rgba(255,255,255,0.1); }
+    summary{ cursor:pointer; font-weight: 800; color:#e2e8f0; }
+    .summary-actions{ display:flex; justify-content:center; gap: 12px; flex-wrap:wrap; margin-top: 24px; }
+    .btn-ghost{ border-radius: 12px; padding: 10px 16px; font-weight: 800; cursor:pointer; border: 1px solid rgba(255,255,255,0.2); background: transparent; color:#e2e8f0; transition: all .15s ease; }
+    .btn-ghost:hover{ background: rgba(255,255,255,0.1); }
+    .btn-light{ border-radius: 12px; padding: 10px 16px; font-weight: 800; cursor:pointer; border: 1px solid transparent; background: #fff; color:#0f172a; transition: all .15s ease; display:flex; align-items:center; gap:8px; }
+    .btn-light:hover{ background:#f1f5f9; transform: translateY(-1px); }
+
+    /* Print */
+    #print-root { position: fixed; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; z-index: -100; pointer-events: none; }
+    @media print{
+      @page{ size: A4; margin: 12mm; }
+      body{ background:#fff !important; padding-bottom:0; color:#000; }
+      header, main, footer, .container, .container-narrow { display:none !important; }
+      #print-root { display:block !important; position: static !important; width: auto !important; height: auto !important; overflow: visible !important; opacity: 1 !important; z-index: auto !important; }
+      #print-root{ font-size: 10.5pt; line-height: 1.5; font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; }
+      #print-root h1{ font-size: 16pt; margin: 0 0 5mm; border-bottom: 2px solid #000; padding-bottom: 2mm; }
+      #print-root h2{ font-size: 12pt; margin: 6mm 0 3mm; background: #eee; padding: 2mm 4mm; border-left: 4px solid #666; }
+      .avoid-break{ break-inside: avoid; }
+      .logo-print { height: 24px; width: auto; margin-right: 10px; vertical-align: middle; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="print-root" class="hidden" aria-hidden="true"></div>
+
+  <header>
+    <div class="header-row">
+      <div class="header-left">
+        <img src="logo@2x.png" alt="SKYLEAF" class="logo-img" onerror="this.style.display='none'">
+        <div class="title-area" onclick="window.location.reload()" role="button" tabindex="0">
+          <h1 class="title">エンジニア成長カルテ</h1>
+          <p class="subtitle">自分と周りが働きやすい環境をつくるために、認識をすり合わせるためのカルテです。</p>
+        </div>
+      </div>
+      <!-- <div id="app-version" class="version"></div> -->
+    </div>
+  </header>
+
+  <main>
+    <div class="container-narrow stack-xxl">
+
+      <section id="intro-area" class="card pad-lg intro-block">
+        <h2><span aria-hidden="true">ℹ️</span> このカルテについて</h2>
+        <p>
+          いまの自分の立ち位置や、仕事の進め方の傾向から、<br>
+          <span style="color:var(--primary); font-weight:800;">「プロジェクトで意識すべき観点」</span>と
+          <span style="color:var(--primary); font-weight:800;">「すれ違いを減らす工夫」</span>
+          を整理します。
+        </p>
+        <div class="positive-msg">
+          <span aria-hidden="true">✨</span>
+          チームの認識を合わせることで、<strong>あなたが実力を発揮しやすい環境</strong>を、チームのみんなで作っていくための第一歩です。
+        </div>
+        <div class="safety-note">
+          <strong>安心して使うためのルール：</strong><br>
+          本音ですり合わせるために、評価・査定には使いません。結果の共有も任意です。
+        </div>
+      </section>
+
+      <!-- Form -->
+      <form id="reflection-form" class="card pad-lg" novalidate>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;color:var(--primary-dark);font-weight:900;font-size:14px;">1</div>
+          <div>
+            <p class="card-title" style="margin:0;">いまの状況を整理する</p>
+            <p class="card-sub" style="margin:2px 0 0;">必須項目を選ぶと「カルテを見る」が押せます</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+
+        <!-- Q1: Experience -->
+        <fieldset>
+          <legend>Q1. エンジニアとしての経験はどれに近いですか？ <span class="req">*必須</span></legend>
+          <div class="grid two">
+            <label class="option"><input class="opt sr-only" type="radio" name="exp_eng" value="junior"><div class="option-card"><div class="opt-title">1〜2年</div><div class="opt-desc">初期：現場に慣れていく時期</div></div></label>
+            <label class="option"><input class="opt sr-only" type="radio" name="exp_eng" value="middle"><div class="option-card"><div class="opt-title">3〜5年</div><div class="opt-desc">中盤：任される範囲が広がる時期</div></div></label>
+            <label class="option"><input class="opt sr-only" type="radio" name="exp_eng" value="senior"><div class="option-card"><div class="opt-title">6〜9年</div><div class="opt-desc">経験者：周囲を支える場面が増える時期</div></div></label>
+            <label class="option"><input class="opt sr-only" type="radio" name="exp_eng" value="veteran"><div class="option-card"><div class="opt-title">10年以上</div><div class="opt-desc">熟練：全体を見て判断する場面が増える時期</div></div></label>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- Q2: Role Scope -->
+        <fieldset>
+          <legend>Q2. 後輩のサポートや、チームをまとめる経験はどのくらいですか？ <span class="req">*必須</span></legend>
+          <div class="grid two">
+            <label class="option"><input class="opt sr-only" type="radio" name="role_scope" value="none"><div class="option-card"><div class="opt-title">未経験</div><div class="opt-desc">まだ自分のタスクが中心（これから挑戦）</div></div></label>
+            <label class="option"><input class="opt sr-only" type="radio" name="role_scope" value="novice"><div class="option-card"><div class="opt-title">〜1年</div><div class="opt-desc">後輩を見ることが増え始めた（ちょっと任され始めた）</div></div></label>
+            <label class="option"><input class="opt sr-only" type="radio" name="role_scope" value="lead"><div class="option-card"><div class="opt-title">1〜3年</div><div class="opt-desc">周りを支える場面が増えた（支える/任せる）</div></div></label>
+            <label class="option"><input class="opt sr-only" type="radio" name="role_scope" value="manager"><div class="option-card"><div class="opt-title">4年以上</div><div class="opt-desc">全体を見る・管理が中心</div></div></label>
+          </div>
+        </fieldset>
+
+        <!-- Q2.5: Interactive Question for Leaders -->
+        <div id="sub-q-leader" class="sub-q-area hidden"> <!-- Added hidden -->
+          <fieldset>
+            <legend style="color:var(--orange-text); font-size:14px; margin-bottom:8px;">Q2.5 リーダー業務で、特に「不安」や「負担」を感じる場面は？ <span style="font-weight:400; font-size:12px;">※処方箋を出します（複数選択可・任意）</span></legend>
+            <div class="grid">
+              <label class="option">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="quality">
+                <div class="option-card">
+                  <div class="opt-title">任せるのが怖い（品質・手戻り）</div>
+                  <div class="opt-desc">「自分でやった方が早い」「任せると品質が下がる」と感じて抱え込みがち。</div>
+                </div>
+              </label>
+              <label class="option">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="visibility">
+                <div class="option-card">
+                  <div class="opt-title">進捗が見えない（管理・放置）</div>
+                  <div class="opt-desc">報告が来なくてソワソワする。あるいは細かく聞きすぎてマイクロマネジメントになりそう。</div>
+                </div>
+              </label>
+              <label class="option">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="shield">
+                <div class="option-card">
+                  <div class="opt-title">板挟みがつらい（調整・矢面）</div>
+                  <div class="opt-desc">顧客・上司の要望と、現場メンバーの負担の間で、自分がバッファになろうとして疲れる。</div>
+                </div>
+              </label>
+              <label class="option">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="human">
+                <div class="option-card">
+                  <div class="opt-title">人に言うのが苦手（指摘・人間関係）</div>
+                  <div class="opt-desc">年上メンバーへの指摘や、厳しいフィードバックをする時に強いストレスを感じる。</div>
+                </div>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Q3: Coworkers -->
+        <fieldset>
+          <legend>Q3. ふだん、現場で関わることが多い相手は？ <span class="req">*必須（複数選択）</span></legend>
+          <div class="grid three">
+            <label class="option"><input class="opt sr-only" type="checkbox" name="coworker" value="internal_boss"><div class="option-card" style="text-align:center;"><div style="font-size:24px; margin-bottom:6px;">👨‍💼</div><div class="opt-title" style="font-size:12px;">自社の先輩/上司</div></div></label>
+            <label class="option"><input class="opt sr-only" type="checkbox" name="coworker" value="internal_junior"><div class="option-card" style="text-align:center;"><div style="font-size:24px; margin-bottom:6px;">🐣</div><div class="opt-title" style="font-size:12px;">自社の後輩/部下</div></div></label>
+            <label class="option"><input class="opt sr-only" type="checkbox" name="coworker" value="internal_peer"><div class="option-card" style="text-align:center;"><div style="font-size:24px; margin-bottom:6px;">🤝</div><div class="opt-title" style="font-size:12px;">自社の同僚</div></div></label>
+            <label class="option"><input class="opt sr-only" type="checkbox" name="coworker" value="client_boss"><div class="option-card" style="text-align:center;"><div style="font-size:24px; margin-bottom:6px;">🏢</div><div class="opt-title" style="font-size:12px;">お客様側の担当者</div></div></label>
+            <label class="option"><input class="opt sr-only" type="checkbox" name="coworker" value="partner_junior"><div class="option-card" style="text-align:center;"><div style="font-size:24px; margin-bottom:6px;">🏗️</div><div class="opt-title" style="font-size:12px;">パートナー/協力会社</div></div></label>
+            <label class="option"><input class="opt sr-only" type="checkbox" name="coworker" value="non_engineer"><div class="option-card" style="text-align:center;"><div style="font-size:24px; margin-bottom:6px;">🎨</div><div class="opt-title" style="font-size:12px;">PM/QA/デザイン</div></div></label>
+            <label class="option" style="grid-column:1/-1;"><input class="opt sr-only" type="checkbox" name="coworker" value="solo"><div class="option-card" style="display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;"><div style="font-size:24px;">💻</div><div class="opt-title" style="font-size:12px;">基本ひとり</div></div></label>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- Phase 2 Header -->
+        <div style="display:flex; align-items:center; gap:12px; margin-top: 8px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;color:var(--primary-dark);font-weight:900;font-size:14px;">2</div>
+          <div>
+            <p class="card-title" style="margin:0;">仕事の進め方の傾向を知る</p>
+            <p class="card-sub" style="margin:2px 0 0;">“正解探し”ではなく、すれ違いを減らすための観点です</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+
+        <!-- Q4: Focus -->
+        <fieldset>
+          <legend>Q4. 今の自分が意識したい視点はどれに近いですか？ <span class="req">*必須</span></legend>
+          <div class="grid" style="gap:14px;">
+            <label class="option">
+              <input class="opt sr-only" type="radio" name="focus_axis" value="tech">
+              <div class="option-card" style="display:flex;gap:14px;align-items:flex-start;">
+                <div style="background:var(--primary-light); color:var(--primary); padding:10px; border-radius:12px; font-size:22px;">🛠️</div>
+                <div><div class="opt-title" style="font-size:16px;">技術面</div><div class="opt-desc" style="font-size:13px;">品質、設計、実装の進め方、学習など。</div></div>
+              </div>
+            </label>
+            <label class="option">
+              <input class="opt sr-only" type="radio" name="focus_axis" value="people">
+              <div class="option-card" style="display:flex;gap:14px;align-items:flex-start;">
+                <div style="background:var(--accent-light); color:var(--accent); padding:10px; border-radius:12px; font-size:22px;">🌱</div>
+                <div><div class="opt-title" style="font-size:16px;">周囲との関わり方</div><div class="opt-desc" style="font-size:13px;">相談、協力、伝え方、安心して働くための工夫など。</div></div>
+              </div>
+            </label>
+            <label class="option">
+              <input class="opt sr-only" type="radio" name="focus_axis" value="biz">
+              <div class="option-card" style="display:flex;gap:14px;align-items:flex-start;">
+                <div style="background:#f3e8ff; color:#7e22ce; padding:10px; border-radius:12px; font-size:22px;">🧭</div>
+                <div><div class="opt-title" style="font-size:16px;">全体の見え方</div><div class="opt-desc" style="font-size:13px;">優先順位、期待値調整、価値・コスト・期限のバランスなど。</div></div>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- Q5: Share Style -->
+        <fieldset>
+          <legend>Q5. ふだんの共有のしかたは、どれに近いですか？ <span class="req">*必須</span></legend>
+          <div class="grid three" style="gap:12px;">
+            <label class="option">
+              <input class="opt emerald sr-only" type="radio" name="share_style" value="detail">
+              <div class="option-card" style="text-align:center;">
+                <div style="font-size:24px; margin-bottom:8px;">🔍</div>
+                <div class="opt-title" style="font-size:13px;">こまめに共有</div>
+                <div class="opt-desc">途中でも見せる</div>
+              </div>
+            </label>
+            <label class="option">
+              <input class="opt emerald sr-only" type="radio" name="share_style" value="outcome">
+              <div class="option-card" style="text-align:center;">
+                <div style="font-size:24px; margin-bottom:8px;">🎯</div>
+                <div class="opt-title" style="font-size:13px;">まとまって共有</div>
+                <div class="opt-desc">ある程度形にする</div>
+              </div>
+            </label>
+            <label class="option">
+              <input class="opt emerald sr-only" type="radio" name="share_style" value="adaptive">
+              <div class="option-card" style="text-align:center;">
+                <div style="font-size:24px; margin-bottom:8px;">🔄</div>
+                <div class="opt-title" style="font-size:13px;">相手に合わせる</div>
+                <div class="opt-desc">状況で使い分ける</div>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="actions" style="margin-top: 24px;">
+          <button id="build-sheet" type="button" class="btn" disabled>カルテを見る</button>
+          <div id="error-msg" class="error hidden" role="alert">まだ選べていない項目があります。必須（*）をすべて選んでください。</div>
+        </div>
+      </form>
+
+      <!-- Result Area -->
+      <section id="result-area" class="hidden stack-xxl" aria-live="polite">
+        <div class="result-head">
+          <span class="pill">カルテができました</span>
+          <h2>いまの立場の「意識ポイント」</h2>
+          <p>選択内容から、対話のための観点をまとめています。</p>
+          <div class="hint">※これは「仮説」です。合う／合わないを材料にしてください。</div>
+        </div>
+
+        <div id="block-stage"></div>
+        <div id="block-role"></div>
+        <div id="block-anxiety"></div> <!-- Dynamic Prescription -->
+        <div id="block-comm"></div>
+        <div id="block-focus"></div>
+        <div id="block-growth"></div>
+        <div id="block-share"></div>
+
+        <div class="summary" id="summary-card">
+          <h3><span aria-hidden="true">📋</span> カルテの要約</h3>
+          <div class="summary-grid">
+            <div><small>経験の目安</small><div class="big" id="sum-exp">-</div></div>
+            <div><small>任され方の目安</small><div class="big amber" id="sum-role">-</div></div>
+            <div><small>関わる相手</small><div class="big teal" id="sum-who">-</div></div>
+            <div><small>重心の傾向</small><div class="big" id="sum-focus">-</div></div>
+          </div>
+          <div class="summary-actions">
+            <button id="print-btn" type="button" class="btn-light" aria-label="保存・印刷">保存・印刷</button>
+            <button id="reset-btn" type="button" class="btn-ghost">もう一度つくる</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="data_loader.js"></script>
+  <script src="app_json.js"></script>
+</body>
+</html>
