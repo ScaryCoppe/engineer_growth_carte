@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>エンジニア成長カルテ（v9: Final Fix）</title>
+  <title>エンジニア成長カルテ（v10: スマホ最適化版）</title>
   <meta name="description" content="自分と周りが働きやすい環境をつくるために、認識をすり合わせるためのカルテです。">
 
   <!--
@@ -133,6 +133,24 @@
       white-space:nowrap;
     }
 
+    /* Mobile Header Adjustment */
+    @media (max-width: 640px) {
+      .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .logo-img {
+        height: 32px;
+      }
+      .title {
+        font-size: 18px;
+      }
+      .header-row {
+        padding: 10px 16px;
+      }
+    }
+
     /* Layout sections */
     main{ padding: 28px 0 48px; }
     .stack-xxl{ display:flex; flex-direction:column; gap:48px; }
@@ -253,7 +271,7 @@
       margin-top: 0;
     }
     .sub-q-area.open {
-      max-height: 600px;
+      max-height: 800px; /* 複数選択で伸びるので少し余裕を */
       opacity: 1;
       margin-top: 16px;
       padding: 16px;
@@ -422,31 +440,31 @@
         <!-- Q2.5: Interactive Question for Leaders -->
         <div id="sub-q-leader" class="sub-q-area hidden"> <!-- Added hidden -->
           <fieldset>
-            <legend style="color:var(--orange-text); font-size:14px; margin-bottom:8px;">Q2.5 リーダー業務で、特に「不安」や「負担」を感じる場面は？ <span style="font-weight:400; font-size:12px;">※処方箋を出します（任意）</span></legend>
+            <legend style="color:var(--orange-text); font-size:14px; margin-bottom:8px;">Q2.5 リーダー業務で、特に「不安」や「負担」を感じる場面は？ <span style="font-weight:400; font-size:12px;">※処方箋を出します（複数選択可・任意）</span></legend>
             <div class="grid">
               <label class="option">
-                <input class="opt sr-only" type="radio" name="leader_anxiety" value="quality">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="quality">
                 <div class="option-card">
                   <div class="opt-title">任せるのが怖い（品質・手戻り）</div>
                   <div class="opt-desc">「自分でやった方が早い」「任せると品質が下がる」と感じて抱え込みがち。</div>
                 </div>
               </label>
               <label class="option">
-                <input class="opt sr-only" type="radio" name="leader_anxiety" value="visibility">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="visibility">
                 <div class="option-card">
                   <div class="opt-title">進捗が見えない（管理・放置）</div>
                   <div class="opt-desc">報告が来なくてソワソワする。あるいは細かく聞きすぎてマイクロマネジメントになりそう。</div>
                 </div>
               </label>
               <label class="option">
-                <input class="opt sr-only" type="radio" name="leader_anxiety" value="shield">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="shield">
                 <div class="option-card">
                   <div class="opt-title">板挟みがつらい（調整・矢面）</div>
                   <div class="opt-desc">顧客・上司の要望と、現場メンバーの負担の間で、自分がバッファになろうとして疲れる。</div>
                 </div>
               </label>
               <label class="option">
-                <input class="opt sr-only" type="radio" name="leader_anxiety" value="human">
+                <input class="opt sr-only" type="checkbox" name="leader_anxiety" value="human">
                 <div class="option-card">
                   <div class="opt-title">人に言うのが苦手（指摘・人間関係）</div>
                   <div class="opt-desc">年上メンバーへの指摘や、厳しいフィードバックをする時に強いストレスを感じる。</div>
@@ -588,7 +606,7 @@
   <script>
     "use strict";
 
-    const APP_VERSION = "v9.0 (Final Fix)";
+    const APP_VERSION = "v10.0 (Mobile Opt + Leader+)";
 
     const LABELS = {
       exp: { junior:"1〜2年", middle:"3〜5年", senior:"6〜9年", veteran:"10年以上" },
@@ -1150,14 +1168,16 @@
       const roleVal = document.querySelector('input[name="role_scope"]:checked')?.value;
       const subArea = document.getElementById("sub-q-leader");
       
-      if (roleVal === "lead" || roleVal === "manager") {
+      // novice, lead, manager -> Show
+      if (["novice", "lead", "manager"].includes(roleVal)) {
         subArea.classList.remove("hidden");
         setTimeout(() => subArea.classList.add("open"), 10);
       } else {
         subArea.classList.remove("open");
         setTimeout(() => subArea.classList.add("hidden"), 400); // wait for transition
-        const checked = subArea.querySelector('input:checked');
-        if(checked) checked.checked = false;
+        // Clear checks
+        const checks = subArea.querySelectorAll('input:checked');
+        checks.forEach(c => c.checked = false);
       }
       updateButtonState();
     }
@@ -1167,7 +1187,7 @@
       const role = document.querySelector('input[name="role_scope"]:checked')?.value || null;
       const focus = document.querySelector('input[name="focus_axis"]:checked')?.value || null;
       const share = document.querySelector('input[name="share_style"]:checked')?.value || null;
-      const anxiety = document.querySelector('input[name="leader_anxiety"]:checked')?.value || null;
+      const anxiety = Array.from(document.querySelectorAll('input[name="leader_anxiety"]:checked')).map(x => x.value);
       const coworkers = Array.from(document.querySelectorAll('input[name="coworker"]:checked')).map(x => x.value);
       return { exp, role, focus, share, anxiety, coworkers };
     }
@@ -1189,33 +1209,50 @@
     }
 
     // --- Render ---
-    function renderAnxietyBlock(anxietyKey) {
-      if(!anxietyKey) return null;
-      const data = getAnxietyPrescription(anxietyKey);
+    function renderAnxietyBlock(anxietyKeys) {
+      if(!anxietyKeys || anxietyKeys.length === 0) return null;
+      
       const root = el("div", { className:"card pad-lg" });
       root.style.background = "#fff7ed"; /* orange-50 */
       root.style.borderColor = "#fdba74"; /* orange-300 */
 
       root.appendChild(el("div", { className:"kicker", text:"PART 2.5：リーダーの処方箋", style:"color:#c2410c" }));
-      root.appendChild(el("h3", { className:"block-title", text:`💊 ${data.title}`, style:"color:#9a3412" }));
-      root.appendChild(el("p", { className:"block-sub", text: data.msg, style:"color:#7c2d12" }));
 
-      const grid = el("div", { className:"grid three", style:"margin-top:16px;" });
-      data.steps.forEach(s => {
-        const card = el("div", { className:"panel" });
-        card.style.borderColor = "#fed7aa";
-        card.appendChild(el("div", { className:"label", text: s.t, style:"color:#c2410c; font-size:12px;" }));
-        card.appendChild(el("div", { className:"text", text: s.d, style:"color:#7c2d12;" }));
-        grid.appendChild(card);
+      anxietyKeys.forEach((key, index) => {
+        const data = getAnxietyPrescription(key);
+        if(!data) return;
+
+        // Divider for multiple items
+        if(index > 0) {
+          const hr = el("div", { className:"divider" });
+          hr.style.background = "#fed7aa";
+          hr.style.margin = "24px 0";
+          root.appendChild(hr);
+        }
+
+        const container = el("div", {});
+        container.appendChild(el("h3", { className:"block-title", text:`💊 ${data.title}`, style:"color:#9a3412" }));
+        container.appendChild(el("p", { className:"block-sub", text: data.msg, style:"color:#7c2d12" }));
+
+        const grid = el("div", { className:"grid three", style:"margin-top:16px;" });
+        data.steps.forEach(s => {
+          const card = el("div", { className:"panel" });
+          card.style.borderColor = "#fed7aa";
+          card.appendChild(el("div", { className:"label", text: s.t, style:"color:#c2410c; font-size:12px;" }));
+          card.appendChild(el("div", { className:"text", text: s.d, style:"color:#7c2d12;" }));
+          grid.appendChild(card);
+        });
+        container.appendChild(grid);
+
+        const memo = el("div", { className:"panel", style:"margin-top:12px; background:rgba(255,255,255,0.6); border-color:#fed7aa;" });
+        memo.appendChild(el("strong", { text:"Memo: ", style:"color:#c2410c; font-size:12px;" }));
+        memo.appendChild(document.createTextNode(data.memo));
+        memo.style.fontSize = "13px";
+        memo.style.color = "#7c2d12";
+        container.appendChild(memo);
+
+        root.appendChild(container);
       });
-      root.appendChild(grid);
-
-      const memo = el("div", { className:"panel", style:"margin-top:12px; background:rgba(255,255,255,0.6); border-color:#fed7aa;" });
-      memo.appendChild(el("strong", { text:"Memo: ", style:"color:#c2410c; font-size:12px;" }));
-      memo.appendChild(document.createTextNode(data.memo));
-      memo.style.fontSize = "13px";
-      memo.style.color = "#7c2d12";
-      root.appendChild(memo);
 
       return root;
     }
@@ -1368,10 +1405,9 @@
 
       mount("block-stage", renderStageBlock(sel.exp));
       mount("block-role", renderRoleBlock(getRoleHints(sel.exp, sel.role)));
-      mount("block-anxiety", renderAnxietyBlock(sel.anxiety)); // New Prescription Block
+      mount("block-anxiety", renderAnxietyBlock(sel.anxiety)); // Pass array
       mount("block-comm", renderCommBlock(getCommunicationHints(sel.exp, sel.coworkers)));
       
-      // FIXED LOGIC: Simplified focus block rendering
       const fBlock = getFocusBlock(sel.exp, sel.role, sel.focus);
       mount("block-focus", fBlock ? renderFocusBlock(fBlock) : null);
 
@@ -1428,9 +1464,16 @@
       const rh = getRoleHints(sel.exp, sel.role);
       addSec("PART 2: 任され方のヒント", `${rh.title}\n` + rh.msg.join("\n"));
 
-      // Part 2.5 Anxiety
-      const anx = getAnxietyPrescription(sel.anxiety);
-      if(anx) addSec("PART 2.5: リーダーの処方箋", `${anx.title}\n${anx.msg}\n\n` + anx.steps.map(s=>`・${s.t}: ${s.d}`).join("\n") + `\n\nMemo: ${anx.memo}`);
+      // Part 2.5 Anxiety (Loop)
+      if(sel.anxiety && sel.anxiety.length > 0) {
+        const anxTexts = sel.anxiety.map(key => {
+          const a = getAnxietyPrescription(key);
+          if(!a) return "";
+          return `【${a.title}】\n${a.msg}\n\n` + a.steps.map(s=>`・${s.t}: ${s.d}`).join("\n") + `\n(Memo: ${a.memo})`;
+        }).filter(Boolean).join("\n\n----------------\n\n");
+        
+        if(anxTexts) addSec("PART 2.5: リーダーの処方箋", anxTexts);
+      }
 
       // Part 3
       const comms = getCommunicationHints(sel.exp, sel.coworkers);
