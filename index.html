@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- FIX A: Title uses static text, version handled in comments/JS -->
+  <title>エンジニア成長カルテ</title>
+  <meta name="description" content="エンジニアとしての現状を整理し、次の成長に向けた指針を得るための整理ツールです。">
+
+  <!-- Tailwind CSS (CDN load first) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Config (After CDN) -->
+  <script>
+    // Config definition
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Noto Sans JP"', 'sans-serif'] },
+          colors: {
+            primary: { 50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8' },
+            amber: { 50:'#fffbeb',100:'#fef3c7',500:'#f59e0b',600:'#d97706' },
+            rose: { 50:'#fff1f2',100:'#ffe4e6',500:'#f43f5e',600:'#e11d48',800:'#9f1239' },
+            emerald: { 50:'#ecfdf5',100:'#d1fae5',500:'#10b981',600:'#059669',800:'#065f46' }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'slide-up': 'slideUp 0.5s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity:'0' }, '100%': { opacity:'1' } },
+            slideUp: { '0%': { opacity:'0', transform:'translateY(20px)' }, '100%': { opacity:'1', transform:'translateY(0)' } }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Custom Utilities */
+    .option-card { transition: all 0.2s ease; }
+    .option-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+    
+    /* Checked States */
+    .option-input:checked + .option-card { border-color: #3b82f6; background-color: #eff6ff; box-shadow: 0 0 0 2px #3b82f6; }
+    .checkbox-input:checked + .option-card { border-color: #f43f5e; background-color: #fff1f2; box-shadow: 0 0 0 2px #f43f5e; }
+    .emerald-input:checked + .option-card { border-color: #10b981; background-color: #ecfdf5; box-shadow: 0 0 0 2px #10b981; }
+
+    /* Focus Styles for Accessibility */
+    .option-input:focus-visible + .option-card,
+    .checkbox-input:focus-visible + .option-card,
+    .emerald-input:focus-visible + .option-card {
+      outline: 2px solid #2563eb;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* FIX I: Prefers Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  
+    /* ---- Print styles ---- */
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      body { background: #fff !important; }
+      body > *:not(#print-only) { display: none !important; }
+      
+      #print-only { 
+        display: block !important; 
+        position: static; 
+        width: 100%;
+        color: #111 !important; 
+        font-size: 10.5pt; 
+        line-height: 1.45; 
+      }
+
+      /* Print Typography */
+      #print-only h1 { font-size: 14pt; margin: 0 0 6mm 0; border-bottom: 2px solid #333; padding-bottom: 2mm; }
+      #print-only h2 { font-size: 11.5pt; margin: 5mm 0 2mm 0; border-left: 4px solid #666; padding-left: 2mm; background: #f0f0f0; }
+      #print-only .meta { font-size: 9.5pt; margin-bottom: 4mm; color: #444; }
+      #print-only .box { border: 1px solid #ccc; padding: 3mm 4mm; border-radius: 2mm; margin-bottom: 3mm; }
+      #print-only ul { margin: 0; padding-left: 5mm; }
+      #print-only li { margin: 1mm 0; }
+      #print-only .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+      
+      /* FIX G: Handwriting area for print */
+      #print-only .handwriting-area {
+        margin-top: 10mm;
+        border: 2px dashed #ccc;
+        padding: 5mm;
+        height: 30mm;
+        border-radius: 4px;
+        position: relative;
+      }
+      #print-only .handwriting-label {
+        position: absolute;
+        top: -3mm;
+        left: 5mm;
+        background: #fff;
+        padding: 0 2mm;
+        font-weight: bold;
+        font-size: 9pt;
+        color: #666;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-20">
+
+  <!-- Print-only container -->
+  <div id="print-only" style="display:none;" aria-hidden="true">
+    <!-- filled by JS before printing -->
+  </div>
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl md:text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <span class="text-2xl" aria-hidden="true">🧭</span> エンジニア成長カルテ
+        </h1>
+        <p class="text-xs text-slate-500 mt-0.5">いまの立場で「意識しておくと楽になること」を整理する</p>
+      </div>
+      <!-- FIX A: Version handled by JS constant, shown here as reference -->
+      <div id="app-version-display" class="text-xs text-slate-400 font-mono"></div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-12 print:hidden">
+
+    <!-- Intro -->
+    <section class="text-center space-y-4 animate-fade-in">
+      <p class="text-slate-600 leading-relaxed">
+        いまの立場・経験・関わる相手をもとに、<br class="hidden md:inline">
+        <span class="font-bold text-primary-600">「いま意識しておくと楽になること」</span>と
+        <span class="font-bold text-primary-600">「次の段階で困りにくくなる視点」</span>を整理します。
+      </p>
+
+      <!-- FIX D: Weakening the "diagnosis" feel -->
+      <div class="max-w-xl mx-auto text-left bg-white border border-slate-200 rounded-xl p-4 text-sm text-slate-600">
+        <p class="font-bold text-slate-800 mb-2">このカルテについて</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>これは「当たる診断」ではなく、会話をしやすくするための叩き台です。</strong></li>
+          <li>評価や能力判定をするものではありません。</li>
+          <li>一人で見直すため、あるいは共通の資料として話すために使ってください。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Form Area -->
+    <form id="diagnosis-form" class="space-y-8" onsubmit="return false;">
+
+      <!-- Phase 1 -->
+      <section id="phase-1" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-8 animate-slide-up">
+        <div class="border-b border-slate-100 pb-4 mb-4">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span class="bg-primary-100 text-primary-700 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+            いまの状況を整理する
+          </h2>
+        </div>
+
+        <!-- Q1 -->
+        <fieldset class="space-y-4">
+          <legend class="font-bold text-slate-700 w-full mb-2 block">
+            Q1. エンジニアとしての経験はどれに近いですか？ <span class="text-red-500 text-xs ml-1">*必須</span>
+          </legend>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_eng" value="junior" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full">
+                <div class="font-bold text-slate-800">1〜2年</div>
+                <div class="text-xs text-slate-500 mt-1">初期：現場に慣れていく時期</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_eng" value="middle" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full">
+                <div class="font-bold text-slate-800">3〜5年</div>
+                <div class="text-xs text-slate-500 mt-1">中盤：任される範囲が広がる時期</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_eng" value="senior" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full">
+                <div class="font-bold text-slate-800">6〜9年</div>
+                <div class="text-xs text-slate-500 mt-1">経験者：周囲を支える場面が増える時期</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_eng" value="veteran" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full">
+                <div class="font-bold text-slate-800">10年以上</div>
+                <div class="text-xs text-slate-500 mt-1">熟練：全体を見て判断する場面が増える時期</div>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Q2 -->
+        <fieldset class="space-y-4">
+          <legend class="font-bold text-slate-700 w-full mb-2 block">
+            Q2. 任され方として、いま一番近いものは？ <span class="text-red-500 text-xs ml-1">*必須</span>
+          </legend>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_leader" value="none" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white">
+                <div class="font-bold text-slate-800 text-sm">まだ任される側が中心（これから挑戦）</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_leader" value="novice" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white">
+                <div class="font-bold text-slate-800 text-sm">ちょっと任され始めた（〜1年）</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_leader" value="lead" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white">
+                <div class="font-bold text-slate-800 text-sm">任せる・支える場面が増えた（1〜3年）</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="radio" name="exp_leader" value="manager" class="option-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white">
+                <div class="font-bold text-slate-800 text-sm">チーム全体を見て動くことが多い（4年以上）</div>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Q3 -->
+        <!-- FIX C: Changed values to English keys. Added "other/non_engineer" option (FIX E) -->
+        <fieldset class="space-y-4">
+          <legend class="font-bold text-slate-700 w-full mb-2 block">
+            Q3. ふだん、関わることが多い相手は？ <span class="text-red-500 text-xs ml-1">*必須（複数選択）</span>
+          </legend>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="coworker" value="internal_boss" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center">
+                <div class="text-xl mb-1" aria-hidden="true">👨‍💼</div>
+                <div class="text-xs font-bold">自社の先輩/上司</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="coworker" value="internal_junior" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center">
+                <div class="text-xl mb-1" aria-hidden="true">🐣</div>
+                <div class="text-xs font-bold">自社の後輩/部下</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="coworker" value="internal_peer" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center">
+                <div class="text-xl mb-1" aria-hidden="true">🤝</div>
+                <div class="text-xs font-bold">自社の同僚</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="coworker" value="client_boss" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center">
+                <div class="text-xl mb-1" aria-hidden="true">🏢</div>
+                <div class="text-xs font-bold">お客様側の担当者</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="coworker" value="partner_junior" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center">
+                <div class="text-xl mb-1" aria-hidden="true">🏗️</div>
+                <div class="text-xs font-bold">パートナー/協力会社</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="coworker" value="non_engineer" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center">
+                <div class="text-xl mb-1" aria-hidden="true">🎨</div>
+                <div class="text-xs font-bold">PM/QA/デザイン</div>
+              </div>
+            </label>
+            <label class="cursor-pointer group md:col-span-3">
+              <input type="checkbox" name="coworker" value="solo" class="checkbox-input sr-only" onchange="checkCompletion()">
+              <div class="option-card border border-slate-200 rounded-lg p-3 bg-white text-center flex items-center justify-center gap-2">
+                <div class="text-xl" aria-hidden="true">💻</div>
+                <div class="text-xs font-bold">基本ひとり</div>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+      </section>
+
+      <!-- Phase 2 -->
+      <section id="phase-2" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-8 animate-slide-up" style="animation-delay: 0.1s;">
+        <div class="border-b border-slate-100 pb-4 mb-4">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span class="bg-primary-100 text-primary-700 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+            仕事の進め方の傾向を知る
+          </h2>
+        </div>
+
+        <div class="space-y-8">
+
+          <!-- Q4 -->
+          <fieldset class="space-y-4">
+            <legend class="font-bold text-slate-700 text-lg w-full mb-2 block">
+              Q4. 今の自分が意識したい視点はどれに近いですか？ <span class="text-red-500 text-xs ml-1">*必須</span>
+            </legend>
+
+            <div class="space-y-4">
+              <label class="cursor-pointer group block">
+                <input type="radio" name="skill_priority" value="tech" class="option-input sr-only" onchange="checkCompletion()">
+                <div class="option-card border-2 border-slate-100 rounded-xl p-5 bg-white flex items-start gap-4 hover:border-slate-300">
+                  <div class="bg-blue-100 text-blue-600 p-3 rounded-lg text-2xl flex-shrink-0" aria-hidden="true">🛠️</div>
+                  <div>
+                    <h4 class="font-bold text-slate-800 text-lg mb-1">技術面</h4>
+                    <p class="text-sm text-slate-500">品質、設計、実装の進め方、学習など。</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="cursor-pointer group block">
+                <input type="radio" name="skill_priority" value="people" class="option-input sr-only" onchange="checkCompletion()">
+                <div class="option-card border-2 border-slate-100 rounded-xl p-5 bg-white flex items-start gap-4 hover:border-slate-300">
+                  <div class="bg-green-100 text-green-600 p-3 rounded-lg text-2xl flex-shrink-0" aria-hidden="true">🌱</div>
+                  <div>
+                    <h4 class="font-bold text-slate-800 text-lg mb-1">周囲との関わり方</h4>
+                    <p class="text-sm text-slate-500">相談、協力、伝え方、安心して働くための工夫など。</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="cursor-pointer group block">
+                <input type="radio" name="skill_priority" value="biz" class="option-input sr-only" onchange="checkCompletion()">
+                <div class="option-card border-2 border-slate-100 rounded-xl p-5 bg-white flex items-start gap-4 hover:border-slate-300">
+                  <div class="bg-purple-100 text-purple-600 p-3 rounded-lg text-2xl flex-shrink-0" aria-hidden="true">🧭</div>
+                  <div>
+                    <h4 class="font-bold text-slate-800 text-lg mb-1">全体の見え方</h4>
+                    <p class="text-sm text-slate-500">優先順位、期待値調整、価値・コスト・期限のバランスなど。</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Q5 -->
+          <fieldset class="space-y-4 pt-4 border-t border-slate-100">
+            <legend class="font-bold text-slate-700 text-lg w-full mb-2 block">
+              Q5. ふだんの共有のしかたは、どれに近いですか？ <span class="text-red-500 text-xs ml-1">*必須</span>
+            </legend>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label class="cursor-pointer group">
+                <input type="radio" name="report_style" value="detail" class="emerald-input sr-only" onchange="checkCompletion()">
+                <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full text-center hover:bg-emerald-50">
+                  <div class="text-2xl mb-2" aria-hidden="true">🔍</div>
+                  <div class="font-bold text-slate-800 text-sm mb-1">こまめに共有することが多い</div>
+                  <div class="text-xs text-slate-500">途中でも早めに見せて、認識ズレを減らしたい</div>
+                </div>
+              </label>
+              <label class="cursor-pointer group">
+                <input type="radio" name="report_style" value="outcome" class="emerald-input sr-only" onchange="checkCompletion()">
+                <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full text-center hover:bg-emerald-50">
+                  <div class="text-2xl mb-2" aria-hidden="true">🎯</div>
+                  <div class="font-bold text-slate-800 text-sm mb-1">まとまってから共有することが多い</div>
+                  <div class="text-xs text-slate-500">ある程度形にしてから相談したい（中断を減らしたい）</div>
+                </div>
+              </label>
+              <label class="cursor-pointer group">
+                <input type="radio" name="report_style" value="adaptive" class="emerald-input sr-only" onchange="checkCompletion()">
+                <div class="option-card border border-slate-200 rounded-lg p-4 bg-white h-full text-center hover:bg-emerald-50">
+                  <div class="text-2xl mb-2" aria-hidden="true">🔄</div>
+                  <div class="font-bold text-slate-800 text-sm mb-1">相手や状況で変えることが多い</div>
+                  <div class="text-xs text-slate-500">急ぎ度や相手の好みに合わせる</div>
+                </div>
+              </label>
+            </div>
+          </fieldset>
+
+        </div>
+      </section>
+
+      <!-- Action Button -->
+      <div class="text-center py-4">
+        <button id="submit-btn" type="button" onclick="showResult()" disabled
+          class="bg-slate-300 text-slate-600 font-bold py-4 px-12 rounded-full text-lg shadow-sm transition-all duration-300 transform scale-95 cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-blue-300">
+          カルテを見る
+        </button>
+        <p id="error-msg" class="text-red-500 text-sm mt-2 hidden" role="alert">まだ選べていない項目があります。必須（*）をすべて選んでください。</p>
+      </div>
+    </form>
+
+    <!-- Result Area -->
+    <div id="result-container" class="hidden space-y-12 pb-20" aria-live="polite">
+
+      <!-- Result Header -->
+      <div class="animate-slide-up text-center border-b border-slate-200 pb-8">
+        <div class="inline-block bg-primary-100 text-primary-700 px-4 py-1 rounded-full text-sm font-bold mb-4">カルテ作成できました</div>
+        <h2 class="text-3xl font-bold text-slate-800 mb-2">いまの立場の「意識ポイント」</h2>
+        <!-- FIX D: Wording "Hypothesis" -->
+        <p class="text-slate-500">
+          経験・任され方・関係者・進め方の傾向から、いま意識しておくと楽になる視点をまとめています。<br>
+          <span class="text-xs">※これは「仮説」です。合う／合わないを考えながら読んでください。</span>
+        </p>
+      </div>
+
+      <!-- 1. Stage Feedback -->
+      <div id="stage-feedback" class="animate-slide-up" style="animation-delay: 0.1s;"></div>
+
+      <!-- 2. Leader Maturity -->
+      <div id="maturity-feedback" class="animate-slide-up" style="animation-delay: 0.15s;"></div>
+
+      <!-- 3. Communication -->
+      <div id="comm-feedback" class="animate-slide-up" style="animation-delay: 0.2s;"></div>
+
+      <!-- 4. Type -->
+      <div id="type-feedback" class="animate-slide-up" style="animation-delay: 0.25s;"></div>
+
+      <!-- 4.5 Growth -->
+      <div id="growth-feedback" class="animate-slide-up" style="animation-delay: 0.28s;"></div>
+
+      <!-- 5. Management -->
+      <div id="risk-feedback" class="animate-slide-up" style="animation-delay: 0.3s;"></div>
+
+      <!-- Summary -->
+      <div id="summary-card" class="animate-slide-up mt-12 bg-slate-800 text-slate-100 rounded-xl p-6 md:p-8" style="animation-delay: 0.35s;">
+        <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <span aria-hidden="true">📋</span> カルテの要約
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 text-sm">
+          <div>
+            <span class="block text-slate-300 text-xs mb-1">経験の目安</span>
+            <span id="sum-exp" class="font-bold text-white text-lg">-</span>
+          </div>
+          <div>
+            <span class="block text-slate-300 text-xs mb-1">任され方の目安</span>
+            <span id="sum-leader" class="font-bold text-amber-400">-</span>
+          </div>
+          <div>
+            <span class="block text-slate-300 text-xs mb-1">関わる相手</span>
+            <span id="sum-who" class="font-bold text-rose-400">-</span>
+          </div>
+          <div>
+            <span class="block text-slate-300 text-xs mb-1">重心の傾向</span>
+            <span id="sum-type" class="font-bold text-white text-lg">-</span>
+          </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-slate-700">
+          <details class="bg-slate-900/40 rounded-lg p-4">
+            <summary class="cursor-pointer font-bold text-slate-100">🔎 このカルテの使い方（任意）</summary>
+            <div class="mt-3 text-sm text-slate-200 space-y-2">
+              <p>・一人で：当てはまるところ／違和感があるところに印をつける</p>
+              <p>・誰かと：印をつけた箇所を見ながら「どう感じたか」を共有する</p>
+              <p class="text-slate-300 text-xs">※正解を探す資料ではなく、すれ違いを減らすための資料として使ってください。</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="mt-6 flex justify-center gap-4">
+          <button onclick="preparePrint()" class="bg-white text-slate-900 px-6 py-2 rounded-lg font-bold hover:bg-slate-100 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            保存・印刷（あとで見返す）
+          </button>
+          <!-- FIX J: No location.reload(). Use resetForm() instead. -->
+          <button onclick="resetForm()" class="bg-slate-700 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
+            もう一度つくる
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- APP CONSTANTS ---
+    // FIX A: Centralized versioning
+    const APP_VERSION = "v4.0 (Stable)";
+    
+    // DOMContentLoaded setup
+    document.addEventListener("DOMContentLoaded", () => {
+      const verEl = document.getElementById("app-version-display");
+      if(verEl) verEl.innerText = APP_VERSION;
+    });
+
+    // FIX C: Mapping user-friendly keys to Labels
+    const COWORKER_LABELS = {
+      "internal_boss": "自社の先輩/上司",
+      "internal_junior": "自社の後輩/部下",
+      "internal_peer": "自社の同僚",
+      "client_boss": "お客様側の担当者",
+      "partner_junior": "パートナー/協力会社",
+      "non_engineer": "PM/QA/デザイン",
+      "solo": "基本ひとり"
+    };
+
+    // --- UTILS (FIX H: Safer rendering) ---
+    
+    // Escaping helper for text content
+    const esc = (s) => (s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+    // Helper to generate simple DOM elements cleanly
+    function h(tag, classes, text, children) {
+      const el = document.createElement(tag);
+      if (classes) el.className = classes;
+      if (text) el.textContent = text;
+      if (children && Array.isArray(children)) {
+        children.forEach(c => c && el.appendChild(c));
+      }
+      return el;
+    }
+
+    // --- DATA DEFINITIONS ---
+
+    // PART 1: Current Stage
+    const stages = {
+      junior: {
+        title: "【いまの立場】初期（1〜2年目）",
+        subtitle: "まずは「安心して任せてもらえる人」になるためのポイント",
+        icon: "🌱",
+        content: [
+          { head: "共有で信頼を貯める", bad: "問題が起きてから共有する / 聞かれるまで言わない", action: "「順調です」だけでなく「ここが不安です」もセットで共有する。困りごとは発生した瞬間に短く共有する。" },
+          { head: "完了イメージをすり合わせる", bad: "言われた通りに作ったつもりで手戻りが発生する", action: "着手前に「何ができたら完了ですか？」を確認し、アウトプット（DoD）をすり合わせる。" },
+          { head: "詰まった時の進め方を整える", bad: "すぐに人に聞く / 逆に抱え込んで止まる", action: "ログを読み、仮説を持って調べる。15分詰まったら「ここまで調べた」を添えて相談する。" }
+        ]
+      },
+      middle: {
+        title: "【いまの立場】中盤（3〜5年目）",
+        subtitle: "「自分の成果」から「チームの前進」へ視野を広げるポイント",
+        icon: "🐣",
+        content: [
+          { head: "前後工程に目を向ける", bad: "自分のタスクだけ終わらせて「待ち」になる", action: "設計・テスト・運用の担当に「この仕様で後から困りそうな点ありますか？」と早めに聞き、手戻りを減らす。" },
+          { head: "代案を添えて相談する", bad: "「無理です」だけ言って止める", action: "「A案はリスク高いですが、B案なら期日まで可能です」と選択肢を出して一緒に決める。" },
+          { head: "拾うと効く仕事を見つける", bad: "担当外のアラートや不足を無視する", action: "誰もやっていないが必要なこと（ドキュメント整備、環境整備等）に気づいたら、小さく拾って前進させる。" }
+        ]
+      },
+      senior: {
+        title: "【いまの立場】経験者（6〜9年目）",
+        subtitle: "品質とスピードのバランスを取り、周囲が動きやすい形にするポイント",
+        icon: "🦁",
+        content: [
+          { head: "作らない選択肢を持つ", bad: "言われた機能を全部作って保守コストを増やす", action: "「本当に使われるか？」を確認し、既存機能流用・段階リリースなどの代案を出す。" },
+          { head: "仕組みでミスを減らす", bad: "「気をつける」で解決しようとする", action: "CI/CD、Lint、自動テストなど、意識しなくても品質が保てる仕組みを整える。" },
+          { head: "レビューで次の成長を支える", bad: "細かい指摘だけして背景が伝わらない", action: "「なぜこの変更が必要か」を言語化し、次回から本人が気づける視点を渡す。" }
+        ]
+      },
+      veteran: {
+        title: "【いまの立場】熟練（10年目〜）",
+        subtitle: "部分最適ではなく、全体の価値と持続性を優先するポイント",
+        icon: "👑",
+        content: [
+          { head: "部分最適を疑う", bad: "自分の範囲だけ正解にして全体が苦しくなる", action: "技術的に正しくても、コスト・納期・運用を含めた全体で成立するかを確認して判断する。" },
+          { head: "価値にフォーカスする", bad: "作った量（アウトプット）だけで良し悪しを決める", action: "「誰の何が楽になるか（アウトカム）」を基準に優先順位を整え、チームが迷わないようにする。" },
+          { head: "文化と仕組みを作る", bad: "ルールや罰でコントロールしようとする", action: "心理的安全性・事実ベースの議論・学びの共有が回る仕組みを作り、継続的に育てる。" }
+        ]
+      }
+    };
+
+    // PART 2: Role/Responsibility fit
+    function getLeaderAdvice(expVal, leaderVal) {
+      const standardMsg = {
+        none:   { title: "任され方の変化：これからの準備", msg: "まずは「自分のタスクの周辺」に関心を持つところから。会議での質問や、状況共有も立派な貢献です。" },
+        novice: { title: "任され方の変化：ちょっと任され始めた時期", msg: "小さな約束を守る／話を最後まで聞く／状況を短く共有する。信頼を積み上げる時期です。" },
+        lead:   { title: "任され方の変化：支える・任せるが増えた時期", msg: "自分がやった方が早くても、任せる勇気が必要になります。60点で進めてレビューで整える、が有効です。" },
+        manager:{ title: "任され方の変化：全体を見ることが増えた時期", msg: "自分がいなくても回る仕組みと、次の人が育つ場を作ることが中心になります。" }
+      };
+
+      // FIX F: Added safety buffer text for psychological safety
+      const gapCareMsg = {
+        title: "経験の深みを、影響力につなげる",
+        msg: "経験年数に対して「任され方」がまだ少ない場合でも、焦る必要はありません。契約形態や現場の構造上、そうなることは珍しくありません。<br><br>これからは「管理」ではなく、<strong>相談に乗る／背景を言語化する／判断材料を出す</strong>といった形で影響力を発揮してください。"
+      };
+
+      const earlyPromoteMsg = {
+        title: "任されるのが早い時期のコツ",
+        msg: "早い段階で任されるのは良い経験です。ただ、気合いだけで走ると疲れやすくなります。<br>「自分が一番できる必要はない」ので、年上の人や専門家に頼る<strong>相談の設計</strong>を先に作っておくと安定します。"
+      };
+
+      const expLevel = { 'junior': 1, 'middle': 2, 'senior': 3, 'veteran': 4 };
+      const leaderLevel = { 'none': 0, 'novice': 1, 'lead': 2, 'manager': 3 };
+      const e = expLevel[expVal];
+      const l = leaderLevel[leaderVal];
+
+      // Case A: High Exp & Low role-responsibility
+      if (e >= 3 && l <= 1) {
+        return {
+          title: gapCareMsg.title,
+          msg: gapCareMsg.msg,
+          tips: [
+            { icon:"✨", text:"「役職」だけが前進ではありません。技術メンター／相談役として信頼を作る道も価値があります。" },
+            { icon:"📚", text:"過去のトラブルを「どう気づき、どう直したか」という物語で共有すると、周囲の学びが速くなります。" },
+            { icon:"🤝", text:"無理に引っ張らなくてOK。困っている人の相談に乗るだけでも十分に影響力です。" }
+          ]
+        };
+      }
+
+      // Case B: Low Exp & High role-responsibility
+      if (e <= 1 && l >= 2) {
+        return {
+          title: earlyPromoteMsg.title,
+          msg: earlyPromoteMsg.msg,
+          tips: [
+            { icon:"🛡️", text:"「全部自分で背負う」を捨てる。相談・レビューの頻度を先に決めておくと安心です。" },
+            { icon:"👂", text:"年上メンバーには「教えてください」の姿勢で。敬意があると、助けが返ってきます。" },
+            { icon:"❤️", text:"自分のコンディションを守るのも仕事。休める設計（代替・引き継ぎ）を持ちましょう。" }
+          ]
+        };
+      }
+
+      // Default
+      const base = standardMsg[leaderVal];
+      const defaultTips = {
+        none: [
+          { icon:"👀", text:"自分のタスクだけでなく、進捗ボードやチケットを毎日1回眺めて「全体の温度感」を掴む。" },
+          { icon:"🙋‍♂️", text:"分かったふりをせず「それはどういう意味ですか？」を言えることが、長期的に強いです。" },
+          { icon:"🧹", text:"議事録・ドキュメント整備など、誰もやりたがらない仕事は信頼を作りやすいです。" }
+        ],
+        novice: [
+          { icon:"🤙", text:"「明日やります」を守る。小さな約束の積み上げが一番効きます。" },
+          { icon:"👂", text:"相手の話を途中で遮らない。最後まで聞くことで情報の抜けが減ります。" },
+          { icon:"🆘", text:"トラブル時は謝罪より先に事実（いま何が起きているか）を短く共有する。" }
+        ],
+        lead: [
+          { icon:"🚀", text:"自分が書けば早い場面ほど、任せる。レビューで方向だけ整えるとチームが育ちます。" },
+          { icon:"🏆", text:"手柄はメンバーへ、困りごとは自分が拾う。安心して挑戦できる空気を作れます。" },
+          { icon:"🔄", text:"指示をそのまま流すより、背景を噛み砕いて共有すると誤解が減ります。" }
+        ],
+        manager: [
+          { icon:"⚙️", text:"属人化を減らす。誰が抜けても回る仕組み（手順・レビュー・自動化）を優先する。" },
+          { icon:"🌱", text:"環境を整えるのが仕事。人が力を出せる「邪魔のない状態」を作る。" },
+          { icon:"🏛️", text:"なぜこの仕事をするのか（目的・価値）を繰り返し言語化する。" }
+        ]
+      };
+
+      return { title: base.title, msg: base.msg, tips: defaultTips[leaderVal] };
+    }
+
+    // PART 3: Communication
+    // FIX C: Updated keys to English, added "non_engineer"
+    function getCommunicationTips(expVal, selectedCoworkers) {
+      // Define consistent Junior/Middle check
+      const isJunior = (expVal === 'junior' || expVal === 'middle');
+
+      const tipsDB = {
+        "internal_boss": {
+          junior: {
+            icon:"👨‍💼", title:"対 上司（共有・学習）",
+            advice:"サプライズをなくす",
+            bad:"自己判断で抱え込み、手遅れになってから共有する。",
+            good:"「状況は悪いですが、案はあります」と最短で共有する。",
+            mindset:"上司は「評価者」だけでなく「リソース」でもあります。遠慮せず、学びのために使いましょう。"
+          },
+          senior: {
+            icon:"👨‍💼", title:"対 上司（判断支援）",
+            advice:"解決策を持っていく",
+            bad:"課題だけ投げて判断を丸投げする。",
+            good:"「A案とB案があり、私はA案です。理由は…」と判断材料を添える。",
+            mindset:"上司が見ている景色（納期・コスト・リスク）を想像し、同じ地図で話すと通りやすいです。"
+          }
+        },
+        "internal_junior": {
+          junior: {
+            icon:"🐣", title:"対 後輩（共感）",
+            advice:"一緒に悩む",
+            bad:"先輩風を吹かせて、知ったかぶりをする。",
+            good:"「私も分からなかったから一緒に調べよう」と横に並ぶ。",
+            mindset:"教えることは学ぶこと。質問は自分の理解度を上げるチャンスです。"
+          },
+          senior: {
+            icon:"🐣", title:"対 後輩（育成）",
+            advice:"答えより問い",
+            bad:"正解コードをすぐ渡して考える機会を奪う。",
+            good:"「どこで詰まってる？」「どう考えた？」と思考プロセスをガイドする。",
+            mindset:"コピーを作るのではなく、自走できる人を増やすのがゴールです。"
+          }
+        },
+        "internal_peer": {
+          junior: {
+            icon:"🤝", title:"対 同僚（協力）",
+            advice:"GIVEから始める",
+            bad:"自分のタスクに集中しすぎて周囲を見ない。",
+            good:"手が空いたら「何か手伝えますか？」と声をかける。",
+            mindset:"困った時に助けが返ってくるのは、普段から助けている人です。"
+          },
+          senior: {
+            icon:"🤝", title:"対 同僚（尊重）",
+            advice:"コードと人格を分ける",
+            bad:"レビューで相手を詰めて萎縮させる。",
+            good:"品質の話であり、人格の話ではないことを態度で示す。",
+            mindset:"心理的安全性は勝手に生まれません。経験者が守って初めて回り始めます。"
+          }
+        },
+        "client_boss": {
+          junior: {
+            icon:"🏢", title:"対 お客様側",
+            advice:"記録を残す",
+            bad:"口頭で進めて「言った言わない」になる。",
+            good:"決定事項は議事録やチケットに残し、リンクを送る。",
+            mindset:"信頼は正確な記録から生まれます。自分とチームを守る盾になります。"
+          },
+          senior: {
+            icon:"🏢", title:"対 お客様側",
+            advice:"期待値を握る",
+            bad:"安請け合いして現場を疲弊させる。",
+            good:"「スコープ外ですが、別見積りで対応可能です」と交渉する。",
+            mindset:"御用聞きではなく、技術パートナーとして価値を最大化する視点が効きます。"
+          }
+        },
+        "partner_junior": {
+          junior: {
+            icon:"🏗️", title:"対 パートナー",
+            advice:"敬意を忘れない",
+            bad:"下請けのように扱う。",
+            good:"同じゴールを目指す仲間として、感謝と敬意を示す。",
+            mindset:"所属が違っても、同じチームです。丁寧なコミュニケーションが摩擦を減らします。"
+          },
+          senior: {
+            icon:"🏗️", title:"対 パートナー",
+            advice:"文脈を共有する",
+            bad:"「いい感じに」で丸投げする。",
+            good:"「なぜやるのか」「何がゴールか」を言語化して渡す。",
+            mindset:"情報の非対称性を減らすほど、相手が自律的に動けるようになります。"
+          }
+        },
+        "non_engineer": { // FIX E: Added "non_engineer"
+          junior: {
+            icon:"🎨", title:"対 非エンジニア",
+            advice:"翻訳する",
+            bad:"技術用語（DB、APIなど）をそのまま使って話す。",
+            good:"「画面を表示する仕組み」など、相手の言葉に置き換える。",
+            mindset:"相手は「技術が分からない」のではなく「専門外」なだけです。リスペクトを持って翻訳しましょう。"
+          },
+          senior: {
+            icon:"🎨", title:"対 非エンジニア",
+            advice:"価値で話す",
+            bad:"「技術的に無理です」とだけ伝えてシャットアウトする。",
+            good:"「それを実現すると表示が3秒遅くなりますが、許容できますか？」とトレードオフを示す。",
+            mindset:"共通言語は「コード」ではなく「ユーザー価値」です。そこを握ると議論がスムーズになります。"
+          }
+        },
+        "solo": {
+          junior: {
+            icon:"💻", title:"ソロワーク",
+            advice:"詰まりを防ぐ",
+            bad:"一人で何時間も悩み続けて時間を消費する。",
+            good:"時間を区切り、解決しなければAIやコミュニティ・上司に相談する。",
+            mindset:"孤独は視野を狭めます。意識的に外部の目を入れましょう。"
+          },
+          senior: {
+            icon:"💻", title:"ソロワーク",
+            advice:"未来の自分へ",
+            bad:"自分しか読まないからと汚いコードを放置する。",
+            good:"半年後の自分のためにREADMEやコメントを残す。",
+            mindset:"誰も見ていない時の規律に、プロとしての強さが出ます。"
+          }
+        }
+      };
+
+      return selectedCoworkers.map(target => {
+        const data = tipsDB[target];
+        if (!data) return null;
+        return isJunior ? data.junior : data.senior;
+      }).filter(Boolean);
+    }
+
+    // PART 4: Render Logic
+    function renderPart4({ expVal, leaderVal, typeVal }) {
+      const isJunior = (expVal === 'junior' || expVal === 'middle');
+      const isManager = (leaderVal === 'manager');
+
+      const data = {
+        people: {
+          name: "関わり方に重心がある",
+          tagline: "相談・調整・育成を支える動きが得意になりやすい",
+          strengths: "安心して相談できる空気を作り、周囲の力を引き出せることが強みになりやすいです。",
+          seniorChecklist: [
+            { title: "必要なフィードバックを避けない", desc: "雰囲気を守りつつも、成長に必要な指摘は丁寧に伝える。" },
+            { title: "称賛をタイミングよく言葉にする", desc: "小さな前進や助け合いを見つけたら、その場で短く言語化する。（例：「助かった」「判断よかった」）" },
+            { title: "事実と感情を分ける", desc: "トラブル時は誰が悪いかより、何が起きたか・次に何をするかに焦点を当てる。" },
+            { title: "技術の勘所は押さえる", desc: "書かなくても、見積りや難所が分かる程度のキャッチアップを続ける。" }
+          ],
+          juniorChecklist: [
+            { title: "小さな変化に気づく", desc: "「元気がない」「詰まっていそう」など、小さなサインを見逃さない。" },
+            { title: "感謝を言葉にする", desc: "レビューや雑務をしてくれた人に「ありがとう」を短く伝える。" },
+            { title: "約束を守る", desc: "信頼の土台は小さな約束。納期・返信・共有を丁寧に守る。" }
+          ],
+          managerExtra: {
+            title: "小さな変化に気づくアンテナを張る（マネージャー向け）",
+            desc: "進捗だけでなく、発言量・反応速度・表情・レビューの温度感などの変化を観察する。気づいたら詰めずに確認する。",
+            example: "例：「最近忙しそうだけど、詰まってるところある？」"
+          },
+          theme: { bg:'bg-green-50', border:'border-green-500', iconColor:'bg-green-500' }
+        },
+        tech: {
+          name: "技術に重心がある",
+          tagline: "品質や実装判断を支える動きが得意になりやすい",
+          strengths: "技術的な論点を整理し、品質・保守性の判断を支えられることが強みになりやすいです。",
+          seniorChecklist: [
+            { title: "方針だけ握って任せる", desc: "自分が書けば早い場面ほど、方向だけ示し実装は任せる。" },
+            { title: "判断理由を残す", desc: "技術選定のPros/Consを短く残し、チームの資産にする。" },
+            { title: "フェーズのトレードオフを扱う", desc: "美しさと速度のバランスを、状況に合わせて判断する。" }
+          ],
+          juniorChecklist: [
+            { title: "基礎を固める", desc: "言語仕様やフレームワークの仕組みを理解し、「なぜ動くか」を説明できるようにする。" },
+            { title: "可読性を意識する", desc: "動けばOKではなく、他人が読んで迷わないコードを目指す。" },
+            { title: "引き出しを増やす", desc: "一つのやり方に固執せず、複数の実装パターンを知って使い分ける。" }
+          ],
+          theme: { bg:'bg-blue-50', border:'border-blue-500', iconColor:'bg-blue-500' }
+        },
+        biz: {
+          name: "全体に重心がある",
+          tagline: "優先順位や期待値を揃える動きが得意になりやすい",
+          strengths: "目的・価値・期限・コストのバランスを見て、優先順位や期待値を整えることが強みになりやすいです。",
+          seniorChecklist: [
+            { title: "言い換える力を磨く", desc: "技術の話を、価値・コスト・リスクの言葉に翻訳して伝える。" },
+            { title: "変化を前提にする", desc: "計画変更をブレではなく適応として扱い、チームの混乱を減らす。" },
+            { title: "現場の防波堤になる", desc: "無理な要求にはデータや根拠を添えて交渉し、疲弊を防ぐ。" }
+          ],
+          juniorChecklist: [
+            { title: "誰の課題かを意識する", desc: "作っている機能が誰の何を楽にするのかを言葉にする。" },
+            { title: "数字や指標に触れる", desc: "可能ならKPIや運用指標に触れ、意思決定の材料に慣れる。" },
+            { title: "業務ドメインを学ぶ", desc: "技術だけでなく、業務知識を入れると判断が速くなる。" }
+          ],
+          theme: { bg:'bg-purple-50', border:'border-purple-500', iconColor:'bg-purple-500' }
+        }
+      };
+
+      const d = data[typeVal];
+      if (!d) return "";
+
+      const checklist = isJunior ? d.juniorChecklist : d.seniorChecklist;
+      const theme = d.theme;
+
+      // FIX H: Using template literals with minimal logic for rendering is acceptable
+      // as long as the inputs are strictly controlled (enums).
+      return `
+      <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="p-6 ${theme.bg} border-b">
+          <div class="text-xs font-bold text-slate-500 uppercase mb-2">
+            PART 4：自分の“重心”の傾向（いま意識しやすい視点）
+          </div>
+          <h2 class="text-2xl font-bold mb-2 text-slate-800">${d.name}</h2>
+          <span class="inline-block bg-white border rounded-full px-4 py-1 text-sm font-medium text-slate-600">
+            ${d.tagline}
+          </span>
+          <p class="text-xs text-slate-600 mt-3">
+            ※「向き・不向き」を決めるものではありません。今の自分が意識しやすい視点の目安です。
+          </p>
+        </div>
+
+        <div class="p-6 space-y-8">
+          <div class="text-center">
+            <h3 class="font-bold mb-2 text-slate-800">💪 いまの強みになりやすいところ</h3>
+            <p class="bg-slate-50 rounded-lg p-4 text-slate-600 leading-relaxed">
+              ${d.strengths}
+            </p>
+          </div>
+
+          <div>
+            <h3 class="font-bold mb-4 flex items-center gap-2 text-slate-800">✅ 小さく試せるチェックリスト</h3>
+            <div class="space-y-3">
+              ${checklist.map(item => `
+                <div class="border rounded-lg p-4 flex gap-3 bg-white hover:border-slate-300 transition-colors">
+                  <div class="w-4 h-4 border-2 ${theme.border} rounded mt-1 flex-shrink-0"></div>
+                  <div>
+                    <div class="font-bold text-slate-800">${item.title}</div>
+                    <div class="text-sm text-slate-700 mt-0.5">${item.desc || item.text}</div>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          ${(isManager && d.managerExtra) ? `
+          <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <div class="font-bold mb-1 text-yellow-800">👀 ${d.managerExtra.title}</div>
+            <div class="text-sm text-slate-700 mb-2">${d.managerExtra.desc}</div>
+            <div class="text-xs text-slate-500 bg-white/50 p-2 rounded inline-block border border-yellow-100">${d.managerExtra.example}</div>
+          </div>
+          ` : ""}
+        </div>
+      </div>
+      `;
+    }
+
+    // PART 5: Management Risk
+    function getManagementRiskAdvice(expVal, leaderVal, reportStyle) {
+      // FIX B: Logic changed to rely only on ROLE (leaderVal) for manager-side determination
+      // Previous logic: (!isJunior && !isLeaderNone) was too broad.
+      const isManagerSide = (leaderVal === 'lead' || leaderVal === 'manager');
+
+      const sosTip = {
+        head: "困った時の相談先（自分を守る）",
+        text: "もし共有が受け止められない（放置）／逆に確認が細かすぎて支障が出る場合は、一人で抱え込まず<strong class='text-red-600'>担当営業や社内の相談先</strong>に話してください。これは「逃げ」ではなく「環境調整」です。"
+      };
+
+      if (!isManagerSide) {
+        // --- Player Side ---
+        let tips = [];
+
+        if (reportStyle === 'detail') {
+          tips.push({
+            head: "共有は強み。次は「相手のコスト」も意識",
+            text: "こまめな共有は信頼構築の基本です。さらに「結論から」「判断してほしい点だけ」など、相手の時間を奪わない形に整えると、より強くなります。"
+          });
+          tips.push({
+            head: "自律へ：意見をセットにする",
+            text: "「どうすればいいですか？」だけでなく、「私はこう思いますがどうですか？」と自分の案を添えると、相談の質が上がります。"
+          });
+        } else if (reportStyle === 'outcome') {
+          tips.push({
+            head: "手戻りを避ける：20%の段階で一度合わせる",
+            text: "まとめて共有するスタイルは集中しやすい反面、方向がズレた時のダメージが大きいです。完成度20%で一度「方向合ってますか？」を挟むと安全です。"
+          });
+          tips.push({
+            head: "沈黙を減らす：短い進捗共有",
+            text: "共有がない間、周囲は不安になります。「作業中です」「ここまでOKです」など短い一言だけでも安心感が変わります。"
+          });
+        } else if (reportStyle === 'adaptive') {
+          tips.push({
+            head: "相手に合わせられるのは高度な強み",
+            text: "相手の不安（品質？納期？）を観察し、先回りして情報を出せるのは強いです。将来、役割が広がった時にもそのまま効きます。"
+          });
+          tips.push({
+            head: "合わせすぎ注意：事実は最短で",
+            text: "顔色を伺いすぎて悪い報告が遅れると逆効果です。事実（Fact）は淡々と最短で共有するのが安全です。"
+          });
+        }
+
+        tips.push(sosTip);
+
+        return {
+          title: "共有のクセから見える、困りごとの予防",
+          subtitle: "〜自分が動きやすくなる工夫〜",
+          tips: tips
+        };
+      }
+
+      // --- Manager/Lead Side ---
+      let tips = [];
+
+      if (reportStyle === 'detail') {
+        tips.push({
+          head: "確認が細かくなりすぎて疲れやすい",
+          text: "自分が細かく共有するのが得意だと、周囲にも同じ粒度を求めやすくなります。ゴールだけ握って、プロセスは任せる「我慢」を混ぜると回りやすいです。"
+        });
+      } else if (reportStyle === 'outcome') {
+        tips.push({
+          head: "任せる割合が多くなりすぎて孤立しやすい",
+          text: "任せるのが得意な分、周囲が放置と感じることがあります。定期的な短い確認や、こちらから「困ってない？」と声をかける設計が効きます。"
+        });
+      } else if (reportStyle === 'adaptive') {
+        tips.push({
+          head: "暗黙前提になりやすい（ルール化が効く）",
+          text: "空気を読むのが得意でも、周囲に同じレベルを求めるとすれ違いが起きます。「いつ・何を・どう共有してほしいか」を短く言語化しておくと安心です。"
+        });
+      }
+
+      tips.push({
+        head: "安心して共有できる空気を先に作る",
+        text: "どんな共有でも、まずは「共有してくれてありがとう」と受け止める。共有のハードルを下げることが、最初のリスク対策です。"
+      });
+
+      tips.push({
+        head: "スタイルの違いを前提にする",
+        text: "自分と違う共有スタイルを「ダメ」と決めつけない。頻度やフォーマットを個別に調整するのが、全体を見る側の仕事です。"
+      });
+
+      return {
+        title: "進め方のクセと、起こりやすい困りごと",
+        subtitle: "〜自分の傾向を知り、周囲が動きやすい形にする〜",
+        tips: tips
+      };
+    }
+
+    // --- UI Logic ---
+    function checkCompletion() {
+      const expChecked = document.querySelector('input[name="exp_eng"]:checked');
+      const leaderChecked = document.querySelector('input[name="exp_leader"]:checked');
+      const coworkerChecked = document.querySelectorAll('input[name="coworker"]:checked').length > 0;
+      const skillChecked = document.querySelector('input[name="skill_priority"]:checked');
+      const reportChecked = document.querySelector('input[name="report_style"]:checked');
+
+      const btn = document.getElementById('submit-btn');
+
+      if (expChecked && leaderChecked && coworkerChecked && skillChecked && reportChecked) {
+        btn.disabled = false;
+        btn.classList.remove('bg-slate-300', 'text-slate-600', 'scale-95', 'cursor-not-allowed');
+        btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'scale-100', 'shadow-lg');
+        document.getElementById('error-msg').classList.add('hidden');
+      } else {
+        btn.disabled = true;
+        btn.classList.add('bg-slate-300', 'text-slate-600', 'scale-95', 'cursor-not-allowed');
+        btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'scale-100', 'shadow-lg');
+      }
+    }
+
+    // FIX J: Reset without reload
+    function resetForm() {
+      // 1. Reset Form
+      document.getElementById('diagnosis-form').reset();
+      
+      // 2. Clear state/buttons
+      checkCompletion(); 
+      
+      // 3. Switch Views
+      document.getElementById('result-container').classList.add('hidden');
+      document.getElementById('diagnosis-form').classList.remove('hidden');
+      
+      // 4. Scroll Top (respecting reduced motion if set via CSS, but JS defaults to auto here for safety)
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    function showResult() {
+      const expRadio = document.querySelector('input[name="exp_eng"]:checked');
+      const leaderRadio = document.querySelector('input[name="exp_leader"]:checked');
+      const skillRadio = document.querySelector('input[name="skill_priority"]:checked');
+      const reportRadio = document.querySelector('input[name="report_style"]:checked');
+      const selectedCoworkers = Array.from(document.querySelectorAll('input[name="coworker"]:checked')).map(cb => cb.value);
+
+      if (!expRadio || !leaderRadio || !skillRadio || !reportRadio || selectedCoworkers.length === 0) {
+        document.getElementById('error-msg').classList.remove('hidden');
+        return;
+      }
+
+      const expVal = expRadio.value;
+      const leaderVal = leaderRadio.value;
+      const typeVal = skillRadio.value;
+      const reportVal = reportRadio.value;
+
+      // --- PART 1: Stage ---
+      const stageData = stages[expVal];
+      const stageStyles = {
+        junior: { border:'border-teal-500', gradient:'from-teal-50 to-white', numBg:'bg-teal-100 text-teal-600', todoBorder:'border-teal-400', todoText:'text-teal-600' },
+        middle: { border:'border-blue-500', gradient:'from-blue-50 to-white', numBg:'bg-blue-100 text-blue-600', todoBorder:'border-blue-400', todoText:'text-blue-600' },
+        senior: { border:'border-indigo-500', gradient:'from-indigo-50 to-white', numBg:'bg-indigo-100 text-indigo-600', todoBorder:'border-indigo-400', todoText:'text-indigo-600' },
+        veteran:{ border:'border-purple-500', gradient:'from-purple-50 to-white', numBg:'bg-purple-100 text-purple-600', todoBorder:'border-purple-400', todoText:'text-purple-600' }
+      };
+      const sStyle = stageStyles[expVal];
+
+      // FIX H: Reduced innerHTML usage by using template literals only for content generation, not logic
+      document.getElementById('stage-feedback').innerHTML = `
+        <div class="bg-white rounded-2xl overflow-hidden shadow-lg border-l-8 ${sStyle.border}">
+          <div class="p-6 bg-gradient-to-r ${sStyle.gradient} border-b border-slate-100">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">PART 1：いまの立場で起こりやすいこと</div>
+            <h2 class="text-xl md:text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <span class="text-3xl">${stageData.icon}</span>
+              ${stageData.title}
+            </h2>
+            <p class="text-slate-600 font-medium mt-1 ml-12">${stageData.subtitle}</p>
+          </div>
+          <div class="p-6 md:p-8 space-y-6">
+            <p class="text-sm text-slate-500 mb-2 font-bold flex items-center gap-2">しばらく意識しておくと楽になるポイント</p>
+            <div class="space-y-4">
+              ${stageData.content.map((item, idx) => `
+                <div class="bg-slate-50 rounded-xl p-5 border border-slate-100 hover:shadow-md transition-shadow">
+                  <div class="flex items-start gap-4">
+                    <div class="mt-1 w-6 h-6 rounded-full ${sStyle.numBg} flex-shrink-0 flex items-center justify-center text-sm font-bold">${idx + 1}</div>
+                    <div class="flex-1">
+                      <h3 class="font-bold text-slate-800 text-lg mb-2">${item.head}</h3>
+                      <div class="flex flex-col md:flex-row gap-3 text-sm">
+                        <div class="flex-1 bg-white p-3 rounded border-l-4 border-slate-300 text-slate-500 opacity-90">
+                          <span class="text-xs font-bold text-slate-500 block mb-1">すれ違いが起きやすい例</span>
+                          <div class="text-slate-700">${item.bad}</div>
+                        </div>
+                        <div class="flex-1 bg-white p-3 rounded border-l-4 ${sStyle.todoBorder} text-slate-800 font-medium shadow-sm">
+                          <span class="text-xs font-bold ${sStyle.todoText} block mb-1">試せる動き</span>${item.action}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // --- PART 2: Role/Responsibility fit ---
+      const leaderData = getLeaderAdvice(expVal, leaderVal);
+      document.getElementById('maturity-feedback').innerHTML = `
+        <div class="bg-amber-50 rounded-2xl p-6 md:p-8 border border-amber-100 shadow-sm relative overflow-hidden">
+          <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl text-amber-500 rotate-12">🪜</div>
+          <div class="relative z-10">
+            <div class="text-xs font-bold text-amber-600 uppercase tracking-wide mb-2">PART 2：任され方の変化に合わせたコツ</div>
+            <h2 class="text-xl font-bold text-slate-800 mb-2">${leaderData.title}</h2>
+            <p class="text-slate-600 mb-6 font-medium">${leaderData.msg}</p>
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-amber-200">
+              <h3 class="font-bold text-amber-700 text-sm mb-3">🔑 小さく効くポイント</h3>
+              <ul class="space-y-3">
+                ${leaderData.tips.map(tip => `
+                  <li class="flex items-start gap-3">
+                    <span class="text-xl flex-shrink-0">${tip.icon}</span>
+                    <span class="text-slate-700 text-sm leading-relaxed pt-0.5">${tip.text}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // --- PART 3: Communication ---
+      const commDataList = getCommunicationTips(expVal, selectedCoworkers);
+      const commHtml = commDataList.map(tip => `
+        <div class="bg-white p-5 rounded-xl border border-rose-100 shadow-sm hover:border-rose-300 transition-colors flex flex-col h-full">
+          <div class="flex items-center gap-3 mb-3 border-b border-rose-50 pb-3">
+            <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-2xl flex-shrink-0">${tip.icon}</div>
+            <div>
+              <h4 class="font-bold text-rose-800 text-sm">${tip.title}</h4>
+              <span class="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full inline-block mt-1">🔑 ${tip.advice}</span>
+            </div>
+          </div>
+          <div class="space-y-3 text-sm flex-1 mb-3">
+            <div class="bg-slate-50 p-2.5 rounded border-l-4 border-slate-300 text-slate-500">
+              <div class="text-[10px] font-bold text-slate-500 mb-0.5">すれ違いが起きやすい例</div>
+              <div class="text-slate-700">${tip.bad}</div>
+            </div>
+            <div class="bg-rose-50 p-2.5 rounded border-l-4 border-rose-400 text-slate-700 font-medium">
+              <div class="text-[10px] font-bold text-rose-500 mb-0.5">すれ違いを減らす例</div>
+              ${tip.good}
+            </div>
+          </div>
+          <div class="mt-auto pt-3 border-t border-rose-100 text-xs text-slate-600 leading-relaxed bg-yellow-50/50 p-2 rounded -mx-1">
+            <div class="font-bold text-amber-600 mb-1">💡 補足</div>
+            <div class="text-slate-700">${tip.mindset}</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('comm-feedback').innerHTML = `
+        <div class="bg-rose-50/50 rounded-2xl p-6 md:p-8 border border-rose-100 shadow-sm">
+          <div class="text-xs font-bold text-rose-600 uppercase tracking-wide mb-4">PART 3：相手別・伝え方のヒント</div>
+          <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><span>💬</span> 相手別：すれ違いを減らすコツ</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${commHtml}</div>
+        </div>
+      `;
+
+      // --- PART 4: Center of Gravity (REPLACED) ---
+      document.getElementById('type-feedback').innerHTML = renderPart4({ expVal, leaderVal, typeVal });
+
+      // --- PART 4.5: Growth paths (always show; no selection) ---
+      document.getElementById('growth-feedback').innerHTML = `
+        <div class="bg-slate-50 rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm">
+          <div class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">PART 4.5：意識の置き方から広がりやすい経験</div>
+          <h2 class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2"><span>🧩</span> 視野を広げるための参考</h2>
+          <p class="text-slate-600 text-sm mb-6 leading-relaxed">
+            ここに書いてある内容は、キャリアを決めるためのものではありません。<br>
+            今の意識の置き方が、現場でどんな経験に繋がりやすいかをイメージするための参考情報です。<br>
+            <span class="text-xs text-slate-500">※どれか一つを選ぶ必要はありません。フェーズや現場によって、同時に複数経験することも普通です。</span>
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-xl">🛠️</div>
+                <div class="font-bold text-slate-800">技術に意識が向いている場合</div>
+              </div>
+              <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>設計や実装の判断を任される場面が増えやすい</li>
+                <li>技術選定やレビューに関わる機会が増える</li>
+                <li>困ったときに相談されやすくなる</li>
+              </ul>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-xl">🌱</div>
+                <div class="font-bold text-slate-800">周囲との関わりに意識が向いている場合</div>
+              </div>
+              <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>新人フォローや調整役を頼まれることが増えやすい</li>
+                <li>チームの空気や進め方を整える役割が増える</li>
+                <li>相談の一次受けになる場面が出てくる</li>
+              </ul>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-xl">🧭</div>
+                <div class="font-bold text-slate-800">全体の流れに意識が向いている場合</div>
+              </div>
+              <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>優先順位や進め方の相談を受けやすくなる</li>
+                <li>計画や見積もりの話に呼ばれることが増える</li>
+                <li>現場と周囲の間をつなぐ役割が増える</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // --- PART 5: Management style / difficulties ---
+      const riskData = getManagementRiskAdvice(expVal, leaderVal, reportVal);
+      document.getElementById('risk-feedback').innerHTML = `
+        <div class="bg-emerald-50 rounded-2xl p-6 md:p-8 border border-emerald-100 shadow-sm">
+          <div class="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2">PART 5：進め方のクセと、起こりやすい困りごと</div>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <span class="text-3xl">⚖️</span>
+            ${riskData.title}
+          </h2>
+          <p class="text-slate-600 font-medium mt-1 ml-12">${riskData.subtitle}</p>
+
+          <div class="mt-6 space-y-4">
+            ${riskData.tips.map(tip => `
+              <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm flex items-start gap-4">
+                <div class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">!</div>
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm mb-1">${tip.head}</h4>
+                  <p class="text-sm text-slate-600 leading-relaxed">${tip.text}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      // --- Summary ---
+      const expLabels = { 'junior':'1〜2年', 'middle':'3〜5年', 'senior':'6〜9年', 'veteran':'10年以上' };
+      const leaderLabels = { 'none':'任される側が中心', 'novice':'ちょっと任され始めた', 'lead':'任せる/支えるが増えた', 'manager':'全体を見ることが多い' };
+      const typeLabels = { 'tech':'技術重視', 'people':'関わり方重視', 'biz':'全体重視' };
+      
+      const setSafe = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+      setSafe('sum-exp', expLabels[expVal]);
+      setSafe('sum-leader', leaderLabels[leaderVal]);
+      
+      // FIX C: Use label mapping for summary display
+      const selectedCoworkersText = selectedCoworkers.map(key => COWORKER_LABELS[key] || key).join(', ');
+      setSafe('sum-who', selectedCoworkers.length > 0 ? selectedCoworkersText : '未選択');
+      
+      setSafe('sum-type', typeLabels[typeVal]);
+
+      // Switch view
+      document.getElementById('diagnosis-form').classList.add('hidden');
+      document.getElementById('result-container').classList.remove('hidden');
+      
+      // FIX I: Reduced motion support for scroll
+      const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: isReduced ? 'auto' : 'smooth' });
+    }
+
+    // --- PRINT (FIX G: Added handwriting area) ---
+    function buildPrintSummary() {
+      const now = new Date();
+      const meta = [
+        `作成日: ${now.toLocaleDateString('ja-JP')}`,
+        `経験: ${document.getElementById('sum-exp')?.innerText || '-'}`,
+        `任され方: ${document.getElementById('sum-leader')?.innerText || '-'}`,
+        `関わる相手: ${document.getElementById('sum-who')?.innerText || '-'}`,
+        `重心の傾向: ${document.getElementById('sum-type')?.innerText || '-'}`,
+      ];
+
+      const sections = [
+        { title: "PART1（いまの立場）", id: "stage-feedback" },
+        { title: "PART2（成熟度）", id: "maturity-feedback" },
+        { title: "PART3（相手別・伝え方）", id: "comm-feedback" },
+        { title: "PART4（重心の傾向）", id: "type-feedback" },
+        { title: "PART4.5（視野を広げる参考）", id: "growth-feedback" },
+        { title: "PART5（進め方のクセとリスク）", id: "risk-feedback" },
+      ];
+
+      const cleanText = (el) => {
+        if (!el) return "";
+        return (el.innerText || "").replace(/\n{3,}/g, "\n\n").trim();
+      };
+
+      let html = `<h1>エンジニア成長カルテ（保存用）</h1>`;
+      html += `<div class="meta">${esc(meta.join(" / "))}</div>`;
+      html += `<div class="box avoid-break"><strong>使い方メモ</strong><br>当てはまる／違和感がある箇所を見つけたら、次の1週間で「1つだけ」試す。</div>`;
+
+      for (const s of sections) {
+        const el = document.getElementById(s.id);
+        const text = cleanText(el);
+        if (!text) continue;
+        html += `<h2>${esc(s.title)}</h2>`;
+        html += `<div class="box avoid-break" style="white-space:pre-wrap;">${esc(text)}</div>`;
+      }
+
+      // Add handwriting area for print
+      html += `
+        <div class="handwriting-area avoid-break">
+          <div class="handwriting-label">次に試す1つ：</div>
+        </div>
+      `;
+
+      document.getElementById("print-only").innerHTML = html;
+    }
+
+    function preparePrint() {
+      const printEl = document.getElementById("print-only");
+      printEl.removeAttribute("aria-hidden"); 
+      
+      buildPrintSummary();
+      
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
+
+    window.addEventListener("beforeprint", () => {
+      try { 
+        document.getElementById("print-only").removeAttribute("aria-hidden");
+        buildPrintSummary(); 
+      } catch (e) {}
+    });
+  </script>
+
+</body>
+</html>
